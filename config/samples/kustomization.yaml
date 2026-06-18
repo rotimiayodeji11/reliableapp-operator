@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- ebay.training_v1_reliableapp.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

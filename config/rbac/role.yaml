@@ -1,0 +1,32 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+  - ebay.training
+  resources:
+  - reliableapps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ebay.training
+  resources:
+  - reliableapps/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ebay.training
+  resources:
+  - reliableapps/status
+  verbs:
+  - get
+  - patch
+  - update
