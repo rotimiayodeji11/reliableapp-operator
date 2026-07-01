@@ -1,4 +1,4 @@
-apiVersion: ebay.training.ebay.training/v1
+apiVersion: ebay.training/v1
 kind: ReliableApp
 metadata:
   labels:

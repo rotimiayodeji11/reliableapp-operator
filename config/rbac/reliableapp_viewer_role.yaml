@@ -1,7 +1,7 @@
 # This rule is not used by the project reliableapp-operator itself.
 # It is provided to allow the cluster admin to help manage permissions for users.
 #
-# Grants read-only access to ebay.training.ebay.training resources.
+# Grants read-only access to ebay.training resources.
 # This role is intended for users who need visibility into these resources
 # without permissions to modify them. It is ideal for monitoring purposes and limited-access viewing.
 
@@ -14,7 +14,7 @@ metadata:
   name: reliableapp-viewer-role
 rules:
 - apiGroups:
-  - ebay.training.ebay.training
+  - ebay.training
   resources:
   - reliableapps
   verbs:
@@ -22,7 +22,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - ebay.training.ebay.training
+  - ebay.training
   resources:
   - reliableapps/status
   verbs:

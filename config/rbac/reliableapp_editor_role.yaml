@@ -1,7 +1,7 @@
 # This rule is not used by the project reliableapp-operator itself.
 # It is provided to allow the cluster admin to help manage permissions for users.
 #
-# Grants permissions to create, update, and delete resources within the ebay.training.ebay.training.
+# Grants permissions to create, update, and delete resources within the ebay.training.
 # This role is intended for users who need to manage these resources
 # but should not control RBAC or manage permissions for others.
 
@@ -14,7 +14,7 @@ metadata:
   name: reliableapp-editor-role
 rules:
 - apiGroups:
-  - ebay.training.ebay.training
+  - ebay.training
   resources:
   - reliableapps
   verbs:
@@ -26,7 +26,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - ebay.training.ebay.training
+  - ebay.training
   resources:
   - reliableapps/status
   verbs:
