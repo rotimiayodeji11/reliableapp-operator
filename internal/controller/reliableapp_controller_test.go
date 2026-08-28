@@ -21,6 +21,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -35,6 +36,8 @@ var _ = Describe("ReliableApp Controller", func() {
 		const (
 			resourceName      = "test-resource"
 			resourceNamespace = "default"
+			resourceImage     = "nginx:1.27"
+			resourceReplicas  = int32(2)
 		)
 
 		ctx := context.Background()
@@ -43,34 +46,42 @@ var _ = Describe("ReliableApp Controller", func() {
 			Name:      resourceName,
 			Namespace: resourceNamespace,
 		}
-		reliableapp := &ebaytrainingv1.ReliableApp{}
+		var reliableapp *ebaytrainingv1.ReliableApp
 
 		BeforeEach(func() {
-			By("creating the custom resource for the Kind ReliableApp")
-			err := k8sClient.Get(ctx, typeNamespacedName, reliableapp)
-			if err != nil && errors.IsNotFound(err) {
-				resource := &ebaytrainingv1.ReliableApp{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: resourceNamespace,
-					},
-					// TODO(user): Specify other spec details if needed.
-				}
-				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+			By("Creating a valid ReliableApp")
+			reliableapp = &ebaytrainingv1.ReliableApp{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: resourceNamespace,
+				},
+				Spec: ebaytrainingv1.ReliableAppSpec{
+					Image:    resourceImage,
+					Replicas: resourceReplicas,
+				},
 			}
+			Expect(k8sClient.Create(ctx, reliableapp)).To(Succeed())
 		})
 
 		AfterEach(func() {
-			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &ebaytrainingv1.ReliableApp{}
-			err := k8sClient.Get(ctx, typeNamespacedName, resource)
-			Expect(err).NotTo(HaveOccurred())
+			By("Cleaning up resources created by the test")
+			deployment := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{Name: resourceName, Namespace: resourceNamespace},
+			}
+			if err := k8sClient.Delete(ctx, deployment); err != nil {
+				Expect(errors.IsNotFound(err)).To(BeTrue(), "unexpected Deployment cleanup error: %v", err)
+			}
 
-			By("Cleanup the specific resource instance ReliableApp")
-			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+			resource := &ebaytrainingv1.ReliableApp{
+				ObjectMeta: metav1.ObjectMeta{Name: resourceName, Namespace: resourceNamespace},
+			}
+			if err := k8sClient.Delete(ctx, resource); err != nil {
+				Expect(errors.IsNotFound(err)).To(BeTrue(), "unexpected ReliableApp cleanup error: %v", err)
+			}
 		})
-		It("should successfully reconcile the resource", func() {
-			By("Reconciling the created resource")
+
+		It("creates the desired Deployment and reports progress", func() {
+			By("Reconciling the ReliableApp")
 			controllerReconciler := &ReliableAppReconciler{
 				Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
@@ -80,8 +91,21 @@ var _ = Describe("ReliableApp Controller", func() {
 				NamespacedName: typeNamespacedName,
 			})
 			Expect(err).NotTo(HaveOccurred())
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
+
+			By("Verifying the desired Deployment")
+			deployment := &appsv1.Deployment{}
+			Expect(k8sClient.Get(ctx, typeNamespacedName, deployment)).To(Succeed())
+			Expect(deployment.Spec.Replicas).NotTo(BeNil())
+			Expect(*deployment.Spec.Replicas).To(Equal(resourceReplicas))
+			Expect(deployment.Spec.Template.Spec.Containers).To(HaveLen(1))
+			Expect(deployment.Spec.Template.Spec.Containers[0].Image).To(Equal(resourceImage))
+			Expect(metav1.IsControlledBy(deployment, reliableapp)).To(BeTrue())
+
+			By("Verifying status for a Deployment with no ready replicas")
+			updatedApp := &ebaytrainingv1.ReliableApp{}
+			Expect(k8sClient.Get(ctx, typeNamespacedName, updatedApp)).To(Succeed())
+			Expect(updatedApp.Status.ReadyReplicas).To(BeZero())
+			Expect(updatedApp.Status.Phase).To(Equal("Progressing"))
 		})
 	})
 })
