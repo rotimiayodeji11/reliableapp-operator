@@ -1,0 +1,24 @@
+# Versioned Taurus baseline-versus-candidate smoke gate for isolated test targets.
+execution:
+  - concurrency: 5
+    ramp-up: 30s
+    hold-for: 2m
+    scenario: baseline
+  - concurrency: 5
+    ramp-up: 30s
+    hold-for: 2m
+    scenario: candidate
+scenarios:
+  baseline:
+    requests:
+      - url: ${BASELINE_URL}/healthz
+        method: GET
+  candidate:
+    requests:
+      - url: ${CANDIDATE_URL}/healthz
+        method: GET
+reporting:
+  - module: passfail
+    criteria:
+      - avg-rt>500ms for 10s, continue as failed
+      - failures>1% for 10s, continue as failed
