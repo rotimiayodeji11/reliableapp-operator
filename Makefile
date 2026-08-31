@@ -276,12 +276,14 @@ HELM_EXTRA_ARGS ?=
 
 .PHONY: install-helm
 install-helm: ## Install the pinned Helm version required by the pipeline.
-	@command -v $(HELM) >/dev/null 2>&1 || { \
-		echo "Installing Helm v$(HELM_VERSION)..." && \
+	@current_version="$$(helm version --template '{{.Version}}' 2>/dev/null || true)"; \
+	if [ "$$current_version" != "v$(HELM_VERSION)" ]; then \
+		echo "Installing Helm v$(HELM_VERSION) (current: $${current_version:-unavailable})..."; \
 		curl -fsSL "https://raw.githubusercontent.com/helm/helm/v$(HELM_VERSION)/scripts/get-helm-4" | bash; \
-	}
-	@helm version --short 2>/dev/null | grep -Eq "v$(HELM_VERSION)" || { \
-		echo "Expected Helm v$(HELM_VERSION), but found: $$(helm version --short 2>/dev/null || echo unavailable)" >&2; \
+	fi
+	@current_version="$$(helm version --template '{{.Version}}' 2>/dev/null || true)"; \
+	[ "$$current_version" = "v$(HELM_VERSION)" ] || { \
+		echo "Expected Helm v$(HELM_VERSION), but found: $${current_version:-unavailable}" >&2; \
 		exit 1; \
 	}
 
