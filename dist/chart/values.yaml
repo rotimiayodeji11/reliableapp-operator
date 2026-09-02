@@ -27,6 +27,11 @@ manager:
   args:
     - --leader-elect
 
+  ## Health endpoint shared by the manager and Kubernetes probes
+  ##
+  health:
+    port: 8081
+
   ## Image pull secrets
   ##
   # imagePullSecrets:

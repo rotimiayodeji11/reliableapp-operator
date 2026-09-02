@@ -48,6 +48,7 @@ pipeline {
       steps {
         sh 'bash ci/validate-manifests.sh'
         sh 'helm lint "$HELM_CHART"'
+        sh 'bash ci/validate-health-probes.sh "$HELM_CHART"'
         sh 'mkdir -p "$EVIDENCE_DIR" && helm template "$RELEASE_NAME" "$HELM_CHART" --set-string manager.image.repository="$IMAGE_REPOSITORY" --set-string manager.image.tag="$IMAGE_TAG" > "$EVIDENCE_DIR/helm-template.yaml"'
         archiveArtifacts artifacts: 'evidence/helm-template.yaml', fingerprint: true
       }
